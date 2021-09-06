@@ -1,4 +1,3 @@
-from re import sub
 import requests
 import discord
 from discord.channel import TextChannel
