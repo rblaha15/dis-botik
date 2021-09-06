@@ -285,7 +285,7 @@ async def zabit(ctx):
                       required=False,
                   )
               ],)
-async def otazka(ctx, otázka=''):
+async def otazka(ctx, otázka='?'):
     odpovedi = [
         'Jo.',
         'Nejspíš ano.',
@@ -305,7 +305,7 @@ async def otazka(ctx, otázka=''):
     if otázka[-1] != '?':
         otázka += '?'
 
-    if otázka == '':
+    if otázka == '?':
         await ctx.send(f'Špatné paranetry! Syntax je```/otázka otázka: String```')
     else:
         await ctx.send(f'{otázka}\n{random.choice(odpovedi)}')
