@@ -67,6 +67,7 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
     with open('message.json', 'r', encoding='utf-8') as file:
         file.seek(0)
         json = load(file)[0]
+        print(json)
 
     id = json['id']
     channel_id = loads(requests.get(
@@ -125,6 +126,7 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
     with open('message.json', 'r', encoding='utf-8') as file:
         file.seek(0)
         json = load(file)[0]
+        print(json)
 
     id = json['id']
     channel_id = loads(requests.get(
@@ -171,6 +173,7 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
     with open('message.json', 'r', encoding='utf-8') as file:
         file.seek(0)
         json = load(file)[0]
+        print(json)
 
     id = json['id']
     channel_id = loads(requests.get(
@@ -204,6 +207,7 @@ async def _ukol_update(ctx: SlashContext):
     with open('message.json', 'r', encoding='utf-8') as file:
         file.seek(0)
         json = load(file)[0]
+        print(json)
 
     id = json['id']
     text = json['text']
@@ -228,6 +232,7 @@ async def _ukol_create(ctx: SlashContext):
     with open('message.json', 'r', encoding='utf-8') as file:
         file.seek(0)
         json = load(file)[0]
+        print(json)
         text = json['text']
 
     mes: WebhookMessage = webhook.send(
