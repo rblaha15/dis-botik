@@ -197,7 +197,7 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
 
 @ slash.subcommand(base='ukol',
                    name='update',
-                   description='Odstranit úkol',
+                   description='Aktualizovat úkoly. POZOR! Vrátí chybu!',
                    guild_ids=guild_ids,
                    )
 async def _ukol_update(ctx: SlashContext):
