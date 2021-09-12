@@ -12,6 +12,10 @@ from datetime import datetime
 # import requests
 from discord import Webhook, RequestsWebhookAdapter
 from json import load, dump, loads
+import os
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+import urllib.parse
 
 intents = discord.Intents.all()
 client = commands.Bot(
@@ -26,6 +30,26 @@ async def on_ready():
     # ahoj.start()
     await client.change_presence(status=discord.Status.online, activity=discord.Activity(name='?', type=discord.ActivityType.watching))
     print('\nBot je připraven!\n')
+
+url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
+dbname = url.path[1:]
+user = url.username
+password = url.password
+host = url.hostname
+port = url.port
+
+con = psycopg2.connect(
+    dbname=dbname,
+    user=user,
+    password=password,
+    host=host,
+    port=port
+)
+
+con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+cur = con.cursor()
+
+cur.execute('CREATE DATABASE message')
 
 guild_ids = [796689722180239370]
 
