@@ -3,4 +3,3 @@ discord-py-slash-command==3.0.1
 discord.py==1.7.3
 requests==2.26.0
 psycopg2
-urllib
