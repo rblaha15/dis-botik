@@ -1,21 +1,20 @@
-import requests
+from os import popen
+import random
+from datetime import datetime
+from json import dump, load, loads
+
 import discord
-from discord.channel import TextChannel
+import pymongo
+import requests
+# import requests
+from discord import RequestsWebhookAdapter, Webhook
 from discord.ext import commands
 from discord.ext.commands.context import Context
 from discord.webhook import WebhookMessage
 from discord_slash import SlashCommand
 from discord_slash.context import SlashContext
-from discord_slash.utils.manage_commands import create_option, create_permission
-import random
-from datetime import datetime
-# import requests
-from discord import Webhook, RequestsWebhookAdapter
-from json import load, dump, loads
-import os
-import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-import urllib.parse
+from discord_slash.utils.manage_commands import (create_option,
+                                                 create_permission)
 
 intents = discord.Intents.all()
 client = commands.Bot(
@@ -31,25 +30,29 @@ async def on_ready():
     await client.change_presence(status=discord.Status.online, activity=discord.Activity(name='?', type=discord.ActivityType.watching))
     print('\nBot je připraven!\n')
 
-url = urllib.parse.urlparse(os.environ['DATABASE_URL'])
-dbname = url.path[1:]
-user = url.username
-password = url.password
-host = url.hostname
-port = url.port
+DBclient = pymongo.MongoClient(
+    'mongodb+srv://abc:1234@abcd.qpqdf.mongodb.net/abcd?retryWrites=true&w=majority')
+db = DBclient.abcd
 
-con = psycopg2.connect(
-    dbname=dbname,
-    user=user,
-    password=password,
-    host=host,
-    port=port
-)
+message = """**Domácí úkoly:**
 
-con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-cur = con.cursor()
+{}
 
-cur.execute('CREATE DATABASE message')
+_Poznámka:_
+Úkoly z Nj jsou vždy pouze pro Nj2, Nj1 je taky má, ale termín je většinou jiný!
+Nejsou zde zaznamenány úkoly Aj2 a Tvd"""
+
+ukol = {
+    'date': '1.1.',
+    'subject': 'M',
+    'description': 'blbost',
+    'special': 0,
+}
+
+# for ukol in db.ukoly.find():
+#    print(ukol)
+
+# print(db.ukoly.find_one({'special': 0}))
 
 guild_ids = [796689722180239370]
 
@@ -88,29 +91,31 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    with open('message.json', 'r', encoding='utf-8') as file:
-        file.seek(0)
-        json = load(file)[0]
-        print(json)
-
-    id = json['id']
+    id = db.ukoly.find_one({'special': 1})['id']
     channel_id = loads(requests.get(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
-    text = json['text']
 
-    ukol = [f'**{date}**', subject, description]
+    ukol = {
+        'date': f'**{date}**',
+        'subject': subject,
+        'description': description,
+        'special': 0,
+    }
 
-    json['ukoly'].append(ukol)
+    db.ukoly.insert_one(ukol)
 
-    with open('message.json', 'w', encoding='utf-8') as file:
-        json['ukoly'].sort(key=sort)
-        dump([json], file, indent=4, ensure_ascii=False)
+    l = list(db.ukoly.find({'special': 0}))
+    db.ukoly.delete_many({'special': 0})
+    try:
+        db.ukoly.insert_many(sorted(l, key=sort))
+    except TypeError:
+        pass
 
-    ukoly = '\n'.join([' – '.join(u) for u in json['ukoly']])
+    ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
 
-    webhook.edit_message(id, content=text.format(ukoly))
+    webhook.edit_message(id, content=message.format(ukoly))
 
-    await ctx.send(f'Úkol "{" – ".join(ukol)}" vytvořen! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
+    await ctx.send(f'Úkol "{" – ".join(removeid(ukol).values())}" vytvořen! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
 
 @ slash.subcommand(base='ukol',
@@ -147,33 +152,31 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    with open('message.json', 'r', encoding='utf-8') as file:
-        file.seek(0)
-        json = load(file)[0]
-        print(json)
-
-    id = json['id']
+    id = db.ukoly.find_one({'special': 1})['id']
     channel_id = loads(requests.get(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
-    text = json['text']
 
-    stary_ukol = ' – '.join(json['ukoly'][int(pos)])
+    l = list(db.ukoly.find({'special': 0}))
+
+    stary_ukol = ' – '.join(removeid(l[int(pos)]).values())
 
     if date != None:
-        json['ukoly'][int(pos)][0] = f'**{date}**'
+        l[int(pos)]['date'] = f'**{date}**'
     if subject != None:
-        json['ukoly'][int(pos)][1] = subject
+        l[int(pos)]['subject'] = subject
     if description != None:
-        json['ukoly'][int(pos)][2] = description
+        l[int(pos)]['description'] = description
 
-    ukol = ' – '.join(json['ukoly'][int(pos)])
+    ukol = ' – '.join(removeid(l[int(pos)]).values())
 
-    with open('message.json', 'w', encoding='utf-8') as file:
-        json['ukoly'].sort(key=sort)
-        dump([json], file, indent=4, ensure_ascii=False)
+    db.ukoly.delete_many({'special': 0})
+    try:
+        db.ukoly.insert_many(sorted(l, key=sort))
+    except TypeError:
+        pass
 
-    ukoly = '\n'.join([' – '.join(u) for u in json['ukoly']])
-    webhook.edit_message(id, content=text.format(ukoly))
+    ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
+    webhook.edit_message(id, content=message.format(ukoly))
 
     await ctx.send(f'Úkol "{stary_ukol}" upraven na "{ukol}"! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
@@ -194,29 +197,27 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    with open('message.json', 'r', encoding='utf-8') as file:
-        file.seek(0)
-        json = load(file)[0]
-        print(json)
-
-    id = json['id']
+    id = db.ukoly.find_one({'special': 1})['id']
     channel_id = loads(requests.get(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
-    text = json['text']
 
-    stary_ukol = json['ukoly'][int(pos)]
+    l = list(db.ukoly.find({'special': 0}))
 
-    json['ukoly'].remove(stary_ukol)
+    stary_ukol = l[int(pos)]
 
-    with open('message.json', 'w', encoding='utf-8') as file:
-        json['ukoly'].sort(key=sort)
-        dump([json], file, indent=4, ensure_ascii=False)
+    l.remove(stary_ukol)
 
-    ukoly = '\n'.join([' – '.join(u) for u in json['ukoly']])
+    db.ukoly.delete_many({'special': 0})
+    try:
+        db.ukoly.insert_many(sorted(l, key=sort))
+    except TypeError:
+        pass
 
-    webhook.edit_message(id, content=text.format(ukoly))
+    ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
 
-    await ctx.send(f'Úkol "{" – ".join(stary_ukol)}" odstraněn! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
+    webhook.edit_message(id, content=message.format(ukoly))
+
+    await ctx.send(f'Úkol "{" – ".join(removeid(stary_ukol).values())}" odstraněn! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
 
 @ slash.subcommand(base='ukol',
@@ -228,21 +229,13 @@ async def _ukol_update(ctx: SlashContext):
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    with open('message.json', 'r', encoding='utf-8') as file:
-        file.seek(0)
-        json = load(file)[0]
-        print(json)
+    id = db.ukoly.find_one({'special': 1})['id']
 
-    id = json['id']
-    text = json['text']
+    l = list(db.ukoly.find({'special': 0}))
 
-    with open('message.json', 'w', encoding='utf-8') as file:
-        json['ukoly'].sort(key=sort)
-        dump([json], file, indent=4, ensure_ascii=False)
+    ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
 
-    ukoly = '\n'.join([' – '.join(u) for u in json['ukoly']])
-
-    webhook.edit_message(id, content=text.format(ukoly))
+    webhook.edit_message(id, content=message.format(ukoly))
 
 
 @ slash.subcommand(base='ukol',
@@ -253,26 +246,19 @@ async def _ukol_create(ctx: SlashContext):
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    with open('message.json', 'r', encoding='utf-8') as file:
-        file.seek(0)
-        json = load(file)[0]
-        print(json)
-        text = json['text']
+    db.ukoly.delete_many({})
 
     mes: WebhookMessage = webhook.send(
-        text.format('Žádné nejsou :)'), wait=True)
+        message.format('Žádné nejsou :)'), wait=True)
 
     channel_id = loads(requests.get(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
 
-    json = {}
-    json['id'] = mes.id
-    json['ukoly'] = []
-    json['text'] = text
-
-    with open('message.json', 'w', encoding='utf-8') as file2:
-        json['ukoly'].sort(key=sort)
-        dump([json], file2, indent=4, ensure_ascii=False)
+    sp_ukol = {
+        'special': 1,
+        'id': mes.id,
+    }
+    db.ukoly.insert_one(sp_ukol)
 
     await ctx.send(f'Zpráva vytvořena! Zde je odkaz: https://discord.com/channels/796689722180239370/{channel_id}/{mes.id}', embeds=[])
 
@@ -281,7 +267,7 @@ mesice = ('Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
 
 
 def sort(it: str):
-    x = it[0].replace('*', '').split('.')
+    x = it['date'].replace('*', '').split('.')
     if x[0] in mesice:
         y = (mesice.index(x[0]) + 1) * 100
     else:
@@ -290,6 +276,13 @@ def sort(it: str):
     if z == 0:
         return 1200
     return z
+
+
+def removeid(d):
+    r = dict(d)
+    del r['_id']
+    del r['special']
+    return r
 
 
 @ client.command(aliases=['z', 'zabít'])
