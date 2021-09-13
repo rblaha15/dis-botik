@@ -110,6 +110,7 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
         db.ukoly.insert_many(sorted(l, key=sort))
     except TypeError:
         pass
+    l = list(db.ukoly.find({'special': 0}))
 
     ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
 
@@ -174,6 +175,7 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
         db.ukoly.insert_many(sorted(l, key=sort))
     except TypeError:
         pass
+    l = list(db.ukoly.find({'special': 0}))
 
     ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
     webhook.edit_message(id, content=message.format(ukoly))
@@ -212,6 +214,7 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
         db.ukoly.insert_many(sorted(l, key=sort))
     except TypeError:
         pass
+    l = list(db.ukoly.find({'special': 0}))
 
     ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
 
