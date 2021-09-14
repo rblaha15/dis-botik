@@ -40,7 +40,7 @@ message = """**Domácí úkoly:**
 
 _Poznámka:_
 Úkoly z Nj jsou vždy pouze pro Nj2, Nj1 je taky má, ale termín je většinou jiný!
-Nejsou zde zaznamenány úkoly Aj2 a Tvd"""
+Nejsou zde zaznamenány úkoly Aj2, Chc1, Fcv2 a Tvd"""
 
 ukol = {
     'date': '1.1.',
