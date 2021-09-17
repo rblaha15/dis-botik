@@ -63,7 +63,7 @@ async def pozvanka(ctx: Context):
 
 
 @ slash.permission(796689722180239370, create_permission(796693226652303390, 1, True))
-@ slash.subcommand(base='ukol',
+@ slash.subcommand(base='u',
                    name='new',
                    description='Vytvořit nový úkol',
                    guild_ids=guild_ids,
@@ -119,7 +119,7 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
     await ctx.send(f'Úkol "{" – ".join(removeid(ukol).values())}" vytvořen! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
 
-@ slash.subcommand(base='ukol',
+@ slash.subcommand(base='u',
                    name='edit',
                    description='Upraví úkol',
                    guild_ids=guild_ids,
@@ -183,7 +183,7 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
     await ctx.send(f'Úkol "{stary_ukol}" upraven na "{ukol}"! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
 
-@ slash.subcommand(base='ukol',
+@ slash.subcommand(base='u',
                    name='delete',
                    description='Odstranit úkol',
                    guild_ids=guild_ids,
@@ -223,7 +223,7 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
     await ctx.send(f'Úkol "{" – ".join(removeid(stary_ukol).values())}" odstraněn! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
 
 
-@ slash.subcommand(base='ukol',
+@ slash.subcommand(base='u',
                    name='update',
                    description='Aktualizovat úkoly. POZOR! Vrátí chybu!',
                    guild_ids=guild_ids,
@@ -241,7 +241,7 @@ async def _ukol_update(ctx: SlashContext):
     webhook.edit_message(id, content=message.format(ukoly))
 
 
-@ slash.subcommand(base='ukol',
+@ slash.subcommand(base='u',
                    name='create',
                    description='Vytvořit novou zprávu s úkoly',
                    guild_ids=guild_ids,)
