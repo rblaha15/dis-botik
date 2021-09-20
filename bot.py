@@ -92,8 +92,6 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
     id = db.ukoly.find_one({'special': 1})['id']
-    channel_id = loads(requests.get(
-        'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
 
     ukol = {
         'date': f'**{date}**',
@@ -116,7 +114,7 @@ async def _ukol_new(ctx: SlashContext, date, subject, description):
 
     webhook.edit_message(id, content=message.format(ukoly))
 
-    await ctx.send(f'Úkol "{" – ".join(removeid(ukol).values())}" vytvořen! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
+    await ctx.send(f'Úkol "{" – ".join(removeid(ukol).values())}" vytvořen!', embeds=[])
 
 
 @ slash.subcommand(base='u',
@@ -154,8 +152,6 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
     id = db.ukoly.find_one({'special': 1})['id']
-    channel_id = loads(requests.get(
-        'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
 
     l = list(db.ukoly.find({'special': 0}))
 
@@ -180,7 +176,7 @@ async def _ukol_edit(ctx: SlashContext, pos, date=None, subject=None, descriptio
     ukoly = '\n'.join([' – '.join(removeid(u).values()) for u in l])
     webhook.edit_message(id, content=message.format(ukoly))
 
-    await ctx.send(f'Úkol "{stary_ukol}" upraven na "{ukol}"! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
+    await ctx.send(f'Úkol "{stary_ukol}" upraven na "{ukol}"!', embeds=[])
 
 
 @ slash.subcommand(base='u',
@@ -200,8 +196,6 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
     id = db.ukoly.find_one({'special': 1})['id']
-    channel_id = loads(requests.get(
-        'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK').text)['channel_id']
 
     l = list(db.ukoly.find({'special': 0}))
 
@@ -220,7 +214,7 @@ async def _ukol_delete(ctx: SlashContext, pos: str):
 
     webhook.edit_message(id, content=message.format(ukoly))
 
-    await ctx.send(f'Úkol "{" – ".join(removeid(stary_ukol).values())}" odstraněn! Zde je odkaz na zprávu: https://discord.com/channels/796689722180239370/{channel_id}/{id}', embeds=[])
+    await ctx.send(f'Úkol "{" – ".join(removeid(stary_ukol).values())}" odstraněn!', embeds=[])
 
 
 @ slash.subcommand(base='u',
