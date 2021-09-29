@@ -243,7 +243,7 @@ async def _ukol_create(ctx: SlashContext):
     webhook = Webhook.from_url(
         'https://ptb.discord.com/api/webhooks/880521729691250729/7shHqox0wHigHCIelGou6GpImEB-UcBl34k2hlauDS2f8gcskzcnFDriPF-7xK51e4VK', adapter=RequestsWebhookAdapter())
 
-    db.ukoly.delete_many({})
+    db.ukoly.delete_one({'special': 1})
 
     mes: WebhookMessage = webhook.send(
         message.format('Žádné nejsou :)'), wait=True)
