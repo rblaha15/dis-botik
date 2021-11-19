@@ -4,6 +4,7 @@ from datetime import datetime
 from json import dump, load, loads
 
 import discord
+from discord.ext.commands.cog import _cog_special_method
 import pymongo
 import requests
 # import requests
@@ -31,7 +32,7 @@ async def on_ready():
     print('\nBot je připraven!\n')
 
 DBclient = pymongo.MongoClient(
-    'mongodb+srv://abc:1234@abcd.qpqdf.mongodb.net/abcd?retryWrites=true&w=majority')
+    'mongodb+srv://abc:UNVO0Vy0zGSNJ7yI@abcd.qpqdf.mongodb.net/abcd?retryWrites=true&w=majority')
 db = DBclient.abcd
 
 message = """**Domácí úkoly:**
@@ -323,6 +324,32 @@ async def otazka(ctx, otázka='?'):
         await ctx.send(f'Špatné paranetry! Syntax je```/otázka otázka: String```')
     else:
         await ctx.send(f'{otázka}\n{random.choice(odpovedi)}')
+
+pocitani_channel = None
+pocitat = False
+
+cislo = 0
+
+
+@ client.event
+async def on_message(message: discord.message):
+    global cislo
+    if pocitat:
+        if pocitani_channel == message.channel.id:
+            if message.content == str(cislo + 1):
+                cislo += 1
+            else:
+                await message.delete()
+
+
+@ client.command
+async def pocitani(ctx):
+    global pocitani_channel, pocitat
+
+    pocitani_channel = ctx.channel.id
+    pocitat = True
+
+    await ctx.send('0')
 
 
 ###################################################################
