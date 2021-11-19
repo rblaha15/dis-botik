@@ -2,7 +2,7 @@ from os import popen
 import random
 from datetime import datetime
 from json import dump, load, loads
-
+import certifi
 import discord
 from discord.ext.commands.cog import _cog_special_method
 import pymongo
@@ -31,9 +31,11 @@ async def on_ready():
     await client.change_presence(status=discord.Status.online, activity=discord.Activity(name='?', type=discord.ActivityType.watching))
     print('\nBot je připraven!\n')
 
-DBclient = pymongo.MongoClient(
-    'mongodb+srv://abc:UNVO0Vy0zGSNJ7yI@abcd.qpqdf.mongodb.net/abcd?retryWrites=true&w=majority')
-db = DBclient.abcd
+mongoClient = pymongo.MongoClient(
+    'mongodb+srv://abc:UNVO0Vy0zGSNJ7yI@abcd.qpqdf.mongodb.net/abcd?retryWrites=true&w=majority',
+    tlsCAFile=certifi.where()
+)
+db = mongoClient.abcd
 
 message = """**Domácí úkoly:**
 
@@ -325,29 +327,31 @@ async def otazka(ctx, otázka='?'):
     else:
         await ctx.send(f'{otázka}\n{random.choice(odpovedi)}')
 
-pocitani_channel = None
-pocitat = False
-
-cislo = 0
+if db.pocitani.count_documents({}) == 0:
+    db.pocitani.insert_one({"id": 0, "poc": False, "cis": -1})
 
 
 @ client.event
 async def on_message(message: discord.message):
-    global cislo
-    if pocitat:
-        if pocitani_channel == message.channel.id:
-            if message.content == str(cislo + 1):
-                cislo += 1
+    doc = db.pocitani.find_one({})
+
+    print(doc)
+    if doc["poc"]:
+        if doc["id"] == message.channel.id:
+            if message.content == str(doc["cis"] + 1):
+                db.pocitani.find_one_and_update({}, {"$inc": {"cis": 1}})
+                await message.add_reaction("\u2705")
             else:
                 await message.delete()
 
+    await client.process_commands(message)
 
-@ client.command
+
+@ client.command(aliases=["pocitat", "p"])
 async def pocitani(ctx):
-    global pocitani_channel, pocitat
 
-    pocitani_channel = ctx.channel.id
-    pocitat = True
+    db.pocitani.find_one_and_update(
+        {}, {"$set": {"id": ctx.channel.id, "poc": True, "cis": -1}})
 
     await ctx.send('0')
 
@@ -522,15 +526,15 @@ async def odpovedel(message: discord.Message):
         await context.send(content=w)
 
 
-@ client.event
-async def on_message(message: discord.message):
-    global odpovidat, context, id, kanal, krok
-    if odpovidat == True:
-        if kanal == message.channel_id:
-            if message.author_id == id:
-                await odpovedel(message)
-
-    await client.process_commands(message)
+# @ client.event
+# async def on_message(message: discord.message):
+#    global odpovidat, context, id, kanal, krok
+#    if odpovidat == True:
+#        if kanal == message.channel_id:
+#            if message.author_id == id:
+#                await odpovedel(message)
+#
+#    await client.process_commands(message)
 
 
 @ client.command(aliases=['embed', 'e'])
