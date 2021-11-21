@@ -332,17 +332,29 @@ if db.pocitani.count_documents({}) == 0:
 
 
 @ client.event
-async def on_message(message: discord.message):
+async def on_message_edit(before: discord.Message, after: discord.Message):
+    doc = db.pocitani.find_one({})
+
+    print(doc)
+    if doc["poc"]:
+        if doc["id"] == after.channel.id:
+            await after.reply("\u2757")
+            await after.delete()
+
+
+@ client.event
+async def on_message(message: discord.Message):
     doc = db.pocitani.find_one({})
 
     print(doc)
     if doc["poc"]:
         if doc["id"] == message.channel.id:
-            if message.content == str(doc["cis"] + 1):
-                db.pocitani.find_one_and_update({}, {"$inc": {"cis": 1}})
-                await message.add_reaction("\u2705")
-            else:
-                await message.delete()
+            if message.author != client.user:
+                if message.content == str(doc["cis"] + 1):
+                    db.pocitani.find_one_and_update({}, {"$inc": {"cis": 1}})
+                    await message.add_reaction("\u2705")
+                else:
+                    await message.delete()
 
     await client.process_commands(message)
 
