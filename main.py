@@ -1,4 +1,4 @@
-from os import popen
+from os import popen, environ
 import random
 from datetime import datetime
 from json import dump, load, loads
@@ -16,6 +16,8 @@ from discord_slash import SlashCommand
 from discord_slash.context import SlashContext
 from discord_slash.utils.manage_commands import (create_option,
                                                  create_permission)
+from webserver import keep_alive
+
 
 intents = discord.Intents.all()
 client = commands.Bot(
@@ -564,4 +566,8 @@ async def new_embed(ctx):
 #////////////////////////////EMBEDS///////////////////////////////#
 ###################################################################
 
-client.run('ODAxMzg4Nzg0NTg2NDU3MDk4.YAf9dw.OL8iucAymD9e9jZZ8KI2H8tsASA')
+keep_alive()
+
+TOKEN = environ.get("token")
+
+client.run(TOKEN)
