@@ -1,6 +1,0 @@
-discord
-discord-py-slash-command
-discord.py
-requests
-pymongo
-dnspython
